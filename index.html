@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NutriWilson</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0d9488"/>
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root{
+      --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+      --teal:#0d9488; --yellow-100:#fef9c3; --red-100:#fee2e2; --green-100:#dcfce7;
+      --radius:18px;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Helvetica,Arial,sans-serif}
+    body{margin:0;background:var(--bg);color:var(--ink);}
+    .wrap{max-width:720px;margin:0 auto;padding:16px;}
+    header{margin:8px 0 16px 0;}
+    h1{font-size:24px;margin:0 0 4px 0;}
+    .muted{color:var(--muted);font-size:14px;}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 18px rgba(2,8,23,.06);padding:16px;margin:0 0 12px 0;}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;text-align:center}
+    .pill{padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;display:inline-block}
+    .pill.verde{background:var(--green-100);color:#166534}
+    .pill.amarillo{background:var(--yellow-100);color:#854d0e}
+    .pill.rojo{background:var(--red-100);color:#991b1b}
+    .kpi{background:#eef2f7;border-radius:14px;padding:10px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .btn{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:10px 14px;font-weight:600}
+    .btn.ghost{background:#e7eaee;color:#111}
+    input[type="checkbox"]{width:20px;height:20px}
+    .foods{max-height:280px;overflow:auto;border-top:1px solid #e5e7eb;margin-top:8px}
+    .food{padding:10px 0;border-bottom:1px solid #e5e7eb;display:block;width:100%;text-align:left;background:none;border-left:none;border-right:none;border-top:none}
+    .food .meta{font-size:12px;color:var(--muted)}
+    .list{list-style:none;padding:0;margin:0}
+    .list li{padding:10px 0;border-bottom:1px solid #eef2f7}
+    .footer{font-size:12px;color:var(--muted);text-align:center;margin:16px 0 40px}
+    .alt li{margin-left:16px;list-style:disc}
+    .search{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:12px;margin:8px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>NutriWilson</h1>
+      <div class="muted">Keto cardioprotector + Ayuno 16/8 · Demo PWA</div>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <div>
+          <div class="muted">Cumplimiento de hoy</div>
+          <div id="score" style="font-size:32px;font-weight:800">0%</div>
+        </div>
+        <div id="status" class="pill rojo">FUERA DE RANGO</div>
+      </div>
+      <div class="grid3">
+        <div class="kpi"><div class="muted">Carbs</div><div><b id="carbs">0</b> / <span id="carbsGoal">30</span> g</div></div>
+        <div class="kpi"><div class="muted">Proteína</div><div><b id="prot">0</b> / <span id="protGoal">95</span> g</div></div>
+        <div class="kpi"><div class="muted">Grasa</div><div><b id="fat">0</b> / <span id="fatGoal">70</span> g</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 style="margin:0 0 10px 0">Checklist</h3>
+      <div class="list">
+        <label class="row">
+          <div><input id="chkAyuno" type="checkbox"> Ayuno 16/8 cumplido</div>
+        </label>
+        <div class="row">
+          <div>Agua</div>
+          <div class="row" style="gap:6px">
+            <button class="btn ghost" id="aguaMenos">-</button>
+            <div style="width:28px;text-align:center;font-weight:700" id="agua">0</div>
+            <button class="btn ghost" id="aguaMas">+</button>
+            <div class="muted">/ <span id="aguaGoal">8</span> vasos</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <h3 style="margin:0">Registro de comidas</h3>
+        <button class="btn" id="btnAdd">Registrar comida</button>
+      </div>
+      <div id="listComidas" class="list"><div class="muted">Aún no registras comidas hoy.</div></div>
+    </section>
+
+    <section class="card">
+      <h3 style="margin:0 0 6px 0">Alternativas rápidas</h3>
+      <ul id="alts" class="alt"></ul>
+    </section>
+
+    <div class="footer">Esta PWA funciona offline y guarda datos en tu navegador. Para instalarla como app: en Android Chrome → menú ⋮ → “Agregar a pantalla principal”.</div>
+  </div>
+
+  <!-- Modal -->
+  <dialog id="dlg" style="border:none;border-radius:18px;max-width:640px;width:92%">
+    <div style="padding:12px">
+      <div class="row">
+        <h3 style="margin:6px 0">Agregar comida</h3>
+        <button class="btn ghost" onclick="dlg.close()">Cerrar</button>
+      </div>
+      <input class="search" id="q" placeholder="Buscar (pechuga, atún, salmón, caldo…)" />
+      <div id="foods" class="foods"></div>
+    </div>
+  </dialog>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+
+    const OBJ = {carbs:30, prot:95, fat:70, agua:8};
+    const foods = [
+      { id:1, nombre:'Pechuga de pollo asada', porcion:'120 g', kcal:198, carbs:0, prot:37, fat:4 },
+      { id:2, nombre:'Atún en agua (lata)', porcion:'140 g', kcal:168, carbs:0, prot:37, fat:1 },
+      { id:3, nombre:'Salmón a la plancha', porcion:'150 g', kcal:300, carbs:0, prot:34, fat:20 },
+      { id:4, nombre:'Caldo de pollo casero', porcion:'350 ml', kcal:60, carbs:2, prot:7, fat:2 },
+      { id:5, nombre:'Aguacate (1/2)', porcion:'100 g', kcal:160, carbs:2, prot:2, fat:15 },
+      { id:6, nombre:'Almendras (10 pzas)', porcion:'15 g', kcal:87, carbs:2, prot:3, fat:8 },
+      { id:7, nombre:'Brócoli (1 taza)', porcion:'90 g', kcal:31, carbs:4, prot:3, fat:0 },
+      { id:8, nombre:'Espinaca (1 taza)', porcion:'30 g', kcal:7, carbs:0, prot:1, fat:0 },
+      { id:9, nombre:'Yogur griego natural', porcion:'125 g', kcal:80, carbs:4, prot:14, fat:2 },
+    ];
+    const $ = sel => document.querySelector(sel);
+    const $list = $('#listComidas');
+    const $score = $('#score');
+    const $status = $('#status');
+    const $carbs = $('#carbs'), $prot = $('#prot'), $fat = $('#fat');
+    const $carbsGoal = $('#carbsGoal'), $protGoal = $('#protGoal'), $fatGoal = $('#fatGoal');
+    $carbsGoal.textContent = OBJ.carbs; $protGoal.textContent = OBJ.prot; $fatGoal.textContent = OBJ.fat;
+    const $agua = $('#agua'), $aguaGoal = $('#aguaGoal'); $aguaGoal.textContent = OBJ.agua;
+    const $alts = $('#alts');
+
+    let state = JSON.parse(localStorage.getItem('nw_state_pwa')||'{}');
+    state.ayuno = !!state.ayuno;
+    state.agua = state.agua||0;
+    state.comidas = state.comidas||[];
+
+    $('#chkAyuno').checked = state.ayuno;
+    $('#chkAyuno').addEventListener('change', e => { state.ayuno = e.target.checked; save(); render(); });
+    $('#aguaMas').onclick = () => { state.agua = Math.min(OBJ.agua, (state.agua||0)+1); save(); render(); };
+    $('#aguaMenos').onclick = () => { state.agua = Math.max(0, (state.agua||0)-1); save(); render(); };
+    $('#btnAdd').onclick = () => { openDialog(); };
+
+    function save(){ localStorage.setItem('nw_state_pwa', JSON.stringify(state)); }
+    function sum(arr, k){ return arr.reduce((a,x)=>a+(x[k]||0),0); }
+
+    function computeScore(){
+      let score = 0;
+      if(state.ayuno) score += 25;
+      if(state.comidas.length>0) score += 15;
+      if(state.comidas.length>1) score += 10;
+      if(state.comidas.length>2) score += 15;
+      score += 15 * Math.min(state.agua/OBJ.agua, 1);
+      const carbs = sum(state.comidas,'carbs');
+      const prot = sum(state.comidas,'prot');
+      const fat  = sum(state.comidas,'fat');
+      const carbsOk = carbs <= OBJ.carbs ? 1 : Math.max(0, 1 - (carbs-OBJ.carbs)/OBJ.carbs);
+      const protOk  = Math.min(prot/OBJ.prot, 1);
+      const fatOk   = Math.min(fat/OBJ.fat, 1);
+      score += 20*(0.5*carbsOk + 0.3*protOk + 0.2*fatOk);
+      return Math.round(score);
+    }
+
+    function render(){
+      const carbs = sum(state.comidas,'carbs');
+      const prot = sum(state.comidas,'prot');
+      const fat  = sum(state.comidas,'fat');
+      $carbs.textContent = carbs; $prot.textContent = prot; $fat.textContent = fat;
+      $agua.textContent = state.agua||0;
+
+      const s = computeScore();
+      $score.textContent = s + '%';
+      let cls = 'rojo', label = 'FUERA DE RANGO';
+      if(s>=85){ cls='verde'; label='EN RUTA'; }
+      else if(s>=65){ cls='amarillo'; label='AJUSTA'; }
+      $status.className = 'pill '+cls;
+      $status.textContent = label;
+
+      if(state.comidas.length===0){
+        $list.innerHTML = '<div class="muted">Aún no registras comidas hoy.</div>';
+      }else{
+        $list.innerHTML = state.comidas.map((x,i)=>`
+          <li class="row">
+            <div>
+              <div style="font-weight:700">${x.nombre}</div>
+              <div class="muted" style="font-size:12px">${x.porcion} · ${x.kcal} kcal · C${x.carbs} · P${x.prot} · G${x.fat}</div>
+            </div>
+            <button class="btn ghost" onclick="delFood(${i})">Quitar</button>
+          </li>
+        `).join('');
+      }
+
+      let alts = [];
+      if(carbs>OBJ.carbs){
+        alts = [
+          'Pechuga asada + ensalada verde + aceite de oliva',
+          'Atún en agua con pepino y aguacate',
+          'Caldo de pollo + brócoli al vapor',
+        ];
+      }else if(prot<OBJ.prot*0.6){
+        alts = ['Pechuga asada (120 g)','Atún en agua (1 lata)','Yogur griego + chía'];
+      }else{
+        alts = ['Salmón a la plancha + espárragos','Omelette de 2 huevos con espinaca','Tilapia + calabacín'];
+      }
+      $alts.innerHTML = alts.map(x=>`<li>${x}</li>`).join('');
+    }
+
+    function delFood(i){ state.comidas.splice(i,1); save(); render(); }
+
+    const dlg = document.getElementById('dlg');
+    const $foods = document.getElementById('foods');
+    const $q = document.getElementById('q');
+    function openDialog(){ $q.value=''; drawFoods(''); dlg.showModal(); $q.focus(); }
+    function drawFoods(q){
+      const rx = q.trim().toLowerCase();
+      const list = foods.filter(f => f.nombre.toLowerCase().includes(rx));
+      $foods.innerHTML = list.map(f=>`
+        <button class="food" onclick='add(${JSON.stringify(f).replace(/\"/g,"&quot;")})'>
+          <div><b>${f.nombre}</b></div>
+          <div class="meta">${f.porcion} · ${f.kcal} kcal · C${f.carbs} · P${f.prot} · G${f.fat}</div>
+        </button>`).join('') || '<div class="muted" style="padding:16px;text-align:center">Sin resultados</div>';
+    }
+    function add(f){ state.comidas.push(f); save(); render(); dlg.close(); }
+    $q.addEventListener('input', e=> drawFoods(e.target.value));
+
+    render();
+  </script>
+</body>
+</html>
